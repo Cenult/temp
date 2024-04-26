@@ -1,1 +1,72 @@
-boy
+def open_encode_page():
+    global encode_page, encode_page_open
+    encode_page = tk.Toplevel(root)
+    encode_page.title("Encode Page")
+    encode_page.geometry("400x150")
+    center_window(encode_page, 700, 300)
+    encode_page_open = True  
+    canvas = tk.Canvas(encode_page)
+    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    scrollbar = tk.Scrollbar(encode_page, orient=tk.VERTICAL, command=canvas.yview)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    canvas.configure(yscrollcommand=scrollbar.set)
+    frame = tk.Frame(canvas)
+    canvas.create_window((0, 0), window=frame, anchor=tk.NW)
+
+    def encode_message():
+        message = encode_entry.get()
+        if extra_bit_var.get() == 1:
+            encoded_message = file2.encoder(message, extra_bit=1)
+            check = True
+        else:
+            encoded_message = file2.encoder(message, extra_bit=False)
+            check = False
+        encoded_result.config(text="Encoded Message: "+encoded_message)
+        if(error_page_open):
+            error_entry.delete(0, 'end')
+            error_entry.insert(0 , encoded_message)
+        if (decode_page_open):
+            decode_entry.delete(0, 'end')
+            decode_entry.insert(0,encoded_message)
+        global def_values_m1
+        def_values_m1 = encoded_message
+
+    extra_bit_var = tk.IntVar()
+    extra_bit_var.set(1)
+
+    include_extra_bit = tk.Radiobutton(frame, text="Include extra bit", variable=extra_bit_var, value=1, height=2, width=35, font=("Helvetica", 12))
+    include_extra_bit.grid(row=0, column=0)
+
+    dont_include_extra_bit = tk.Radiobutton(frame, text="Don't include extra bit", variable=extra_bit_var, value=0, height=2, width=35, font=("Helvetica", 12))
+    dont_include_extra_bit.grid(row=0, column=1, padx=10, pady=10)
+
+    tk.Label(frame, text="Enter input message or upload text file:", font=("Helvetica", 12)).grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+    global encode_entry
+    encode_entry = tk.Entry(frame, font=("Helvetica", 12))
+    encode_entry.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+    def upload_file():
+        filename = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+        if filename:
+            with open(filename, 'r') as file:
+                content = file.read()
+                content = content.replace('\n' , '')
+                encode_entry.delete(0, tk.END)
+                encode_entry.insert(0, content)
+
+    upload_button = tk.Button(frame, text="Upload File", command=upload_file)
+    upload_button.grid(row=2,column=1, padx=5, pady=10)
+
+    encode_button = tk.Button(frame, text="Encode", command=encode_message, width=20, height=2, font=("Helvetica", 12))
+    encode_button.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+
+    global encoded_result
+    encoded_result = tk.Label(frame, text="", font=("Helvetica", 12), wraplength=350)
+    encoded_result.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+
+    def on_frame_configure(event):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    frame.bind("<Configure>", on_frame_configure)
+
+    encode_page.protocol("WM_DELETE_WINDOW", close_encode_page)
